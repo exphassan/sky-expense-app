@@ -1,0 +1,642 @@
+openapi: 3.0.3
+info:
+  title: SkyExpense API - Personal Finance Manager
+  description: A comprehensive RESTful API for personal finance management built with Node.js, Express, and PostgreSQL.
+  version: 1.0.0
+servers:
+  - url: http://localhost:3000/api
+    description: Development server
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    User:
+      type: object
+      required: [email, password, firstName, lastName, dateOfBirth, gender]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 6
+        firstName:
+          type: string
+        lastName:
+          type: string
+        dateOfBirth:
+          type: string
+          format: date
+        gender:
+          type: string
+          enum: [Male, Female, Unknown]
+    Expense:
+      type: object
+      required: [amount, description, category, type, date]
+      properties:
+        amount:
+          type: number
+          format: float
+          minimum: 0
+        description:
+          type: string
+        category:
+          type: string
+          enum: [Personal, Food, Home, Transportation, Entertainment, Health, Other]
+        type:
+          type: string
+          enum: [Cash, Transfer, Card, Check]
+        date:
+          type: string
+          format: date
+        notes:
+          type: string
+    Income:
+      type: object
+      required: [amount, description, category, date]
+      properties:
+        amount:
+          type: number
+          format: float
+          minimum: 0
+        description:
+          type: string
+        category:
+          type: string
+          enum: [Paycheck, Interest, Investment, Other]
+        date:
+          type: string
+          format: date
+        notes:
+          type: string
+    Debt:
+      type: object
+      required: [amount, description, category, counterpartyName, repaymentDate, direction]
+      properties:
+        amount:
+          type: number
+          format: float
+          minimum: 0
+        description:
+          type: string
+        category:
+          type: string
+          enum: [Personal, Food, Home, Transportation, Entertainment, Health, Other]
+        counterpartyName:
+          type: string
+        counterpartyEmail:
+          type: string
+          format: email
+        repaymentDate:
+          type: string
+          format: date
+        direction:
+          type: string
+          enum: [OwedByMe, OwedToMe]
+        status:
+          type: string
+          enum: [Active, Paid, Overdue]
+    Investment:
+      type: object
+      required: [amount, investmentType, description, startDate]
+      properties:
+        amount:
+          type: number
+          format: float
+          minimum: 0
+        investmentType:
+          type: string
+          enum: [Stocks, Bonds, RealEstate, Crypto, Other]
+        description:
+          type: string
+        startDate:
+          type: string
+          format: date
+        expectedReturnDate:
+          type: string
+          format: date
+        currentValue:
+          type: number
+          format: float
+        returnRate:
+          type: number
+          format: float
+    Subscription:
+      type: object
+      required: [name, amount, billingCycle, nextPaymentDate, category]
+      properties:
+        name:
+          type: string
+        amount:
+          type: number
+          format: float
+          minimum: 0
+        billingCycle:
+          type: string
+          enum: [Weekly, Monthly, Quarterly, Yearly]
+        nextPaymentDate:
+          type: string
+          format: date
+        category:
+          type: string
+          enum: [Streaming, Internet, Utilities, Software, Other]
+        reminderEnabled:
+          type: boolean
+        isActive:
+          type: boolean
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+paths:
+  /auth/register:
+    post:
+      summary: Register a new user
+      tags: [Authentication]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+      responses:
+        '201':
+          description: User successfully registered
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /auth/login:
+    post:
+      summary: Login user
+      tags: [Authentication]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Successful login
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /auth/profile:
+    get:
+      summary: Get user profile
+      tags: [Authentication]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /expenses:
+    post:
+      summary: Create a new expense
+      tags: [Expenses]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Expense'
+      responses:
+        '201':
+          description: Expense created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Expense'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    get:
+      summary: Get all expenses
+      tags: [Expenses]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+        - name: category
+          in: query
+          schema:
+            type: string
+            enum: [Personal, Food, Home, Transportation, Entertainment, Health, Other]
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: List of expenses
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Expense'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /expenses/summary:
+    get:
+      summary: Get expense summary
+      tags: [Expenses]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Expense summary
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: number
+                  byCategory:
+                    type: object
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /incomes:
+    post:
+      summary: Create a new income
+      tags: [Incomes]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Income'
+      responses:
+        '201':
+          description: Income created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Income'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    get:
+      summary: Get all incomes
+      tags: [Incomes]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+        - name: category
+          in: query
+          schema:
+            type: string
+            enum: [Paycheck, Interest, Investment, Other]
+      responses:
+        '200':
+          description: List of incomes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Income'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /debts:
+    post:
+      summary: Create a new debt
+      tags: [Debts]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Debt'
+      responses:
+        '201':
+          description: Debt created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Debt'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /debts/{id}/mark-paid:
+    patch:
+      summary: Mark debt as paid
+      tags: [Debts]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Debt marked as paid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Debt'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Debt not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /debts/overdue:
+    get:
+      summary: Get overdue debts
+      tags: [Debts]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: List of overdue debts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Debt'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /investments:
+    post:
+      summary: Create a new investment
+      tags: [Investments]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Investment'
+      responses:
+        '201':
+          description: Investment created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Investment'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /investments/portfolio-summary:
+    get:
+      summary: Get portfolio summary
+      tags: [Investments]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Portfolio summary
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  totalValue:
+                    type: number
+                  totalReturn:
+                    type: number
+                  byType:
+                    type: object
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /investments/{id}/current-value:
+    patch:
+      summary: Update investment current value
+      tags: [Investments]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [currentValue]
+              properties:
+                currentValue:
+                  type: number
+                  format: float
+                  minimum: 0
+      responses:
+        '200':
+          description: Investment updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Investment'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Investment not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /subscriptions:
+    post:
+      summary: Create a new subscription
+      tags: [Subscriptions]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Subscription'
+      responses:
+        '201':
+          description: Subscription created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Subscription'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /subscriptions/upcoming-reminders:
+    get:
+      summary: Get upcoming subscription reminders
+      tags: [Subscriptions]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: List of upcoming subscription reminders
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Subscription'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /subscriptions/due-today:
+    get:
+      summary: Get subscriptions due today
+      tags: [Subscriptions]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: List of subscriptions due today
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Subscription'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
