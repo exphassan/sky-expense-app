@@ -1,4 +1,4 @@
-# SkyExpense API - Personal Finance Manager
+# Xpensify API - Personal Finance Manager
 
 A comprehensive RESTful API for personal finance management built with Node.js, Express, and PostgreSQL.
 
@@ -26,7 +26,7 @@ A comprehensive RESTful API for personal finance management built with Node.js, 
 1. **Clone the repository**
    ```bash
    git clone <repository-url>
-   cd web-api
+   cd xpensify-api
    ```
 
 2. **Install dependencies**
@@ -423,7 +423,7 @@ npm run seed
 npm install -g pm2
 
 # Start application with PM2
-pm2 start src/app.js --name "skyexpense-api"
+pm2 start src/app.js --name "xpensify-api"
 
 # Monitor application
 pm2 monit
