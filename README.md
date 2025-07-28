@@ -85,7 +85,7 @@ SkyExpense is a full-stack web application for personal finance management, allo
    ```
    **Install dependencies**
    ```bash
-   npm run start
+   npm run dev
    ```
 3. **Access the App**:
    * Open http://localhost:3001 in your browser.

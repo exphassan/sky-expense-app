@@ -22,7 +22,9 @@ export const useAuth = () => {
       delete userWithoutPassword.password;
       setUser(userWithoutPassword);
       localStorage.setItem('xpensify_user', JSON.stringify(userWithoutPassword));
+      window.location.reload();
       return true;
+
     }
     return false;
   };
@@ -58,12 +60,14 @@ export const useAuth = () => {
     delete userWithoutPassword.password;
     setUser(userWithoutPassword);
     localStorage.setItem('xpensify_user', JSON.stringify(userWithoutPassword));
+    window.location.reload();
     return true;
   };
 
   const logout = () => {
     setUser(null);
     localStorage.removeItem('xpensify_user');
+    window.location.reload();
   };
 
   return { user, login, register, logout, loading };
