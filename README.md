@@ -65,17 +65,11 @@ SkyExpense is a full-stack web application for personal finance management, allo
    EMAIL_USER=
    EMAIL_PASS=
    ```
-   **Database Setup**
-   ```bash
-   # Create PostgreSQL database
-   createdb sky-expense-db
-   
-   # Start the application (database tables will be created automatically)
-   npm run dev
-   ```
+   **Install dependencies**
    ```bash
    npm i
    ```
+   **Install dependencies**
    ```bash
    npm run start
    ```
@@ -85,9 +79,11 @@ SkyExpense is a full-stack web application for personal finance management, allo
    ```bash
    cd web-ui
    ```
+   **Start application dependencies**
    ```bash
    npm i
    ```
+   **Install dependencies**
    ```bash
    npm run start
    ```
@@ -100,10 +96,10 @@ SkyExpense is a full-stack web application for personal finance management, allo
 
 ```
 sky-expense-app/  
-├── web-api/                \# Node.js/Express backend  
-│   ├── src/                \# API routes, controllers, services  
-│   └── .env                \# Environment variables  
-├── web-ui/                 \# React frontend  
-│   ├── src/                \# React components, pages, and utilities  
-│   └── .env                \# Frontend environment variables
+├── web-api/        \# Node.js/Express backend  
+│   ├── src/        \# API routes, controllers, services  
+│   └── .env        \# Environment variables  
+├── web-ui/         \# React frontend  
+│   ├── src/        \# React components, pages, and utilities  
+│   └── .env        \# Frontend environment variables
 ```
